@@ -1,0 +1,70 @@
+---
+title: "Peer Assessment for Regressio Models Coursera.org Course"
+author: "Aleksandr Salynskii"
+date: "23 Aug 2015"
+output: pdf_document
+---
+
+##Introduction
+Here we'll analyse the relationship between the type of the transmission and MPG(miles per galon) characteristics of the different cars.   
+First of all we would use the `mtcars` dataset. 
+```{r}
+data(mtcars)
+```
+The `mtcars` dataset contains from 32 automobiles (1973-74 models) on 11 variables.   
+`mpg`   -	Miles/(US) gallon   
+`cyl`   -  Number of cylinders   
+`disp`  -	 Displacement (cu.in.)   
+`hp`    -	 Gross horsepower   
+`drat`  -	 Rear axle ratio   
+`wt`    -	 Weight (lb/1000)   
+`qsec`  -	 1/4 mile time   
+`vs`    -	 V/S   
+`am`    -	 Transmission (0 = automatic, 1 = manual)   
+`gear`  -	 Number of forward gears   
+`carb`  -	 Number of carburetors   
+
+   
+##Analysis
+Here we can see the simple distribution of the MPG with type of transmission as the factor.   
+```{r}
+library(ggplot2)
+library(dplyr)
+mtcarsMod <- mutate(mtcars, tramsmission = ifelse(am == 0, "Automatic", "Manual"))
+mtcarsMod$tramsmission <- as.factor(mtcarsMod$tramsmission)
+ggplot(data = mtcarsMod, aes(x = tramsmission, y = mpg, fill = tramsmission)) + 
+   geom_boxplot()
+```   
+   
+Here we can see, that the mean of the MPG value is higher in cars with manual transmission instead of automatic.   
+Lets fit the linear model to prove it.
+```{r}
+fit <- lm(mpg ~ am, data = mtcarsMod)
+summary(fit)
+```
+Here we can see, that the cars with manual transmission has additional **7.245** mpg(the value of the Estimate is adding to the mpg result if the transmission type is manual), also we can see, that P value is less than **0.05** so the type of the transmission is significant predictor in this model.   
+Now we'll fit some additional models to prove it.
+```{r}
+round(cor(mtcars), 3)
+```
+As we know the corr value means the relationship between two values, so for good model we need to use the variables with **minimum** absolute value of the corr index. So as we see in the upper table, the **am** variable has the smallest corr indexes with **vs, qsec, hp, carb** values, so lest try to fit the model with this predictors and compare the result with previous fit.   
+```{r}
+fit2 <- lm(mpg ~ hp + qsec + vs + am + carb, mtcarsMod)
+summary(fit2)
+```
+Here we can see, that in this model the most significant predictor is **am**, the value of the transmission in this model has the P value smallest P value of **0.00056**, also the **hp** variable seems to be significant because of it's **0.0424** P value. But the R-squared value is much higher than in the model with only transmission type as the predictor.   
+Also for the complete analysis we need to fit the full model, with all variables from number of cylinders(`cyl`) to the number of carburetors(`carb`) as the predictors of the outcome value of `mpg`.
+```{r}
+fitFull <- lm(mpg ~ ., mtcars)
+summary(fitFull)
+```
+The summary of the full model tells us, that there is only one variable hos nearly significant value of the P value, but the R-squared value is much greater than the one we see in the model with only `am` as predictor. 
+```{r}
+summary(lm(mpg ~ cyl, mtcars))
+summary(lm(mpg ~ wt, mtcars))
+summary(lm(mpg ~ hp, mtcars))
+summary(lm(mpg ~ qsec, mtcars))
+summary(lm(mpg ~ carb, mtcars))
+```
+##Conclusion
+As we can see from the analysis part of this work, the transmission factor is significant factor for prediction of the `mpg` value of the car.(Very small P value of the coefficient in the model and the model P value at all.) Also we can say, that the manual transmission add about **7.245** to the `mpg` of the car. But out boxplot tell's us, that only the prediction of the cars with automatic transmission'll be effective instead of manual.
